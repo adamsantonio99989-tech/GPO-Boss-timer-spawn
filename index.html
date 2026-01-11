@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Grand Piece Online – Boss Timer</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      color: #38bdf8;
+    }
+    input, button {
+      margin-top: 15px;
+      padding: 10px;
+      font-size: 16px;
+    }
+    #result {
+      margin-top: 25px;
+      font-size: 18px;
+    }
+    .box {
+      background: #1e293b;
+      padding: 25px;
+      border-radius: 10px;
+      max-width: 500px;
+      margin: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <h1>Grand Piece Online</h1>
+    <h2>Boss Spawn Tracker</h2>
+
+    <input type="file" id="imageInput" accept="image/*">
+    <br>
+    <button onclick="readTime()">Analyze Screenshot</button>
+
+    <div id="result"></div>
+  </div>
+
+<script>
+async function readTime() {
+  const input = document.getElementById("imageInput");
+  const resultDiv = document.getElementById("result");
+
+  if (!input.files.length) {
+    alert("Upload a screenshot first.");
+    return;
+  }
+
+  resultDiv.innerHTML = "Reading server time...";
+
+  const { data: { text } } = await Tesseract.recognize(
+    input.files[0],
+    "eng",
+    { logger: m => console.log(m) }
+  );
+
+  // Try to find a time like 12:34
+  const match = text.match(/([0-9]{1,2}):([0-9]{2})/);
+
+  if (!match) {
+    resultDiv.innerHTML = "❌ Could not detect server time.";
+    return;
+  }
+
+  const hours = parseInt(match[1]);
+  const minutes = parseInt(match[2]);
+
+  // Boss spawn interval (CHANGE THIS)
+  const SPAWN_INTERVAL_MINUTES = 30;
+
+  let totalMinutes = hours * 60 + minutes;
+  let nextSpawn = totalMinutes + SPAWN_INTERVAL_MINUTES;
+
+  let spawnHour = Math.floor(nextSpawn / 60) % 24;
+  let spawnMinute = nextSpawn % 60;
+
+  resultDiv.innerHTML = `
+    ✅ Detected Server Time: <b>${match[0]}</b><br><br>
+    ⏱️ Next Boss Spawn:<br>
+    <b>${spawnHour.toString().padStart(2, "0")}:${spawnMinute.toString().padStart(2, "0")}</b>
+  `;
+}
+</script>
+
+</body>
+</html>
